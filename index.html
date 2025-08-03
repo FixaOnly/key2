@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-gradient-to-br from-blue-950 to-blue-800 text-white">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - FixaTeam</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      min-height: 100vh;
+    }
+    .glow {
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+    .hover-scale:hover {
+      transform: scale(1.05);
+      transition: transform 0.2s ease-in-out;
+    }
+    input:focus, select:focus {
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+      border-color: #60a5fa;
+    }
+    table tr:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+    }
+  </style>
+</head>
+<body class="p-8 font-sans">
+
+  <h1 class="text-4xl font-extrabold text-blue-300 mb-10 text-center tracking-tight">🔥 Admin Panel Aldo Mods Key System</h1>
+
+  <!-- Form Tambah Key -->
+  <div class="bg-blue-900/80 p-8 rounded-2xl shadow-lg glow mb-10 backdrop-blur-sm">
+    <h2 class="text-2xl mb-6 font-bold text-blue-200">Tambah Device Key</h2>
+    <input id="device_id" placeholder="Device ID" class="w-full p-4 my-3 bg-blue-800/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"/>
+    <div class="flex gap-3 items-center">
+      <input id="key" placeholder="Key (otomatis)" class="w-full p-4 my-3 bg-blue-800/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" readonly/>
+      <button onclick="generateKey()" class="bg-blue-700 hover:bg-blue-600 px-5 py-3 rounded-lg text-sm font-medium hover-scale">🔁 Generate</button>
+    </div>
+    <input id="expired" type="number" placeholder="Expired (jumlah hari)" class="w-full p-4 my-3 bg-blue-800/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+    <select id="allowoffline" class="w-full p-4 my-3 bg-blue-800/50 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <option value="true">Allow Offline: true</option>
+      <option value="false">Allow Offline: false</option>
+    </select>
+    <button onclick="addKey()" class="mt-6 bg-blue-600 hover:bg-blue-500 px-8 py-4 rounded-xl font-semibold hover-scale transition duration-300">Tambah Key</button>
+  </div>
+
+  <!-- Tabel Data -->
+  <div class="overflow-x-auto mb-10">
+    <table class="w-full text-sm bg-blue-900/80 rounded-2xl shadow-lg glow backdrop-blur-sm">
+      <thead class="bg-blue-700 text-white">
+        <tr>
+          <th class="p-4 text-left font-semibold">Device ID</th>
+          <th class="p-4 text-left font-semibold">Key</th>
+          <th class="p-4 text-left font-semibold">Expired</th>
+          <th class="p-4 text-left font-semibold">Offline</th>
+          <th class="p-4 text-left font-semibold">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="table-body" class="text-white"></tbody>
+    </table>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="bg-blue-900/80 p-8 rounded-2xl shadow-lg glow backdrop-blur-sm">
+    <h2 class="text-2xl mb-6 text-blue-300 font-bold">🏆 Leaderboard Key</h2>
+    <ul id="leaderboard" class="list-disc list-inside text-white space-y-2"></ul>
+  </div>
+
+  <div class="mt-10 text-center">
+    <a href="z.html">
+      <button class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-2xl shadow-lg hover-scale transition duration-300">
+        👉 Lihat Pengguna
+      </button>
+    </a>
+  </div>
+
+  <script>
+    const repoOwner = "FixaOnly";
+    const repoName = "key2";
+    const filePath = "userdata.json";
+    const branch = "main";
+    const token = "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";
+
+    let data = [];
+    let fileSha = "";
+
+    async function fetchData() {
+      const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
+        headers: { Authorization: `token ${token}` },
+      });
+      const json = await res.json();
+      const content = atob(json.content);
+      data = JSON.parse(content);
+      renderTable();
+      renderLeaderboard();
+      fileSha = json.sha;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("table-body");
+      tbody.innerHTML = "";
+      data.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr class="border-b border-blue-700/50 hover:bg-blue-800/30 transition duration-200">
+            <td class="p-4"><input value="${item.device_id}" onchange="editField(${index}, 'device_id', this.value)" class="bg-transparent text-white border-b border-blue-600 focus:outline-none"/></td>
+            <td class="p-4"><input value="${item.key}" onchange="editField(${index}, 'key', this.value)" class="bg-transparent text-white border-b border-blue-600 focus:outline-none"/></td>
+            <td class="p-4"><input value="${item.expirydate}" onchange="editField(${index}, 'expirydate', this.value)" class="bg-transparent text-white border-b border-blue-600 focus:outline-none"/></td>
+            <td class="p-4">
+              <select onchange="editField(${index}, 'Allowoffline', this.value === 'true')" class="bg-transparent text-white border-b border-blue-600 focus:outline-none">
+                <option value="true" ${item.Allowoffline ? 'selected' : ''}>true</option>
+                <option value="false" ${!item.Allowoffline ? 'selected' : ''}>false</option>
+              </select>
+            </td>
+            <td class="p-4">
+              <button onclick="deleteKey(${index})" class="bg-blue-700 px-5 py-2 rounded-lg font-medium hover:bg-blue-600 hover-scale transition duration-300">Hapus</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderLeaderboard() {
+      const leaderboard = {};
+      data.forEach(item => {
+        leaderboard[item.key] = (leaderboard[item.key] || 0) + 1;
+      });
+      const sorted = Object.entries(leaderboard).sort((a,b)=>b[1]-a[1]);
+      const ul = document.getElementById("leaderboard");
+      ul.innerHTML = "";
+      sorted.forEach(([key, count]) => {
+        ul.innerHTML += `<li class="text-blue-100"><strong>${key}</strong>: ${count} device</li>`;
+      });
+    }
+
+    async function saveData() {
+      const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: "Update JSON data",
+          content: btoa(JSON.stringify(data, null, 2)),
+          sha: fileSha,
+          branch: branch
+        })
+      });
+      const result = await res.json();
+      console.log("Updated:", result);
+    }
+
+    async function addKey() {
+      const device_id = document.getElementById("device_id").value.trim();
+      const key = document.getElementById("key").value.trim();
+      const days = parseInt(document.getElementById("expired").value.trim());
+      const allowoffline = document.getElementById("allowoffline").value === "true";
+
+      if (!device_id || !key || isNaN(days)) {
+        return alert("Isi semua kolom dengan benar");
+      }
+
+      const now = new Date();
+      now.setDate(now.getDate() + days);
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const expirydate = `${dd}-${mm}-${yyyy}`;
+
+      data.push({ device_id, key, expirydate, Allowoffline: allowoffline });
+      await saveData();
+      fetchData();
+      generateKey();
+    }
+
+    function editField(index, field, value) {
+      data[index][field] = value;
+      saveData();
+    }
+
+    async function deleteKey(index) {
+      if (confirm("Yakin hapus key ini?")) {
+        data.splice(index, 1);
+        await saveData();
+        fetchData();
+      }
+    }
+
+    function generateKey() {
+      const random = Math.floor(10000 + Math.random() * 90000);
+      const autoKey = `ALDO-${random}`;
+      document.getElementById("key").value = autoKey;
+    }
+
+    window.onload = () => {
+      fetchData();
+      generateKey();
+    };
+  </script>
+</body>
+  </html>
